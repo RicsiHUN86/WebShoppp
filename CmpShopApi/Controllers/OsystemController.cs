@@ -2,6 +2,7 @@
 using CmpShopApi.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CmpShopApi.Controllers
 {
@@ -71,5 +72,59 @@ namespace CmpShopApi.Controllers
 
             return StatusCode(404, new { message = "Sikertlen törlés" });
         }
+
+        [HttpGet("allOsystemAndComputer")]
+        public object AllOsystemAndComputer()
+        {
+            var computers = context.Osystems.Include(o => o.Computers).ToList();
+
+            if (computers.Count > 0)
+            {
+                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = computers });
+            }
+
+            return StatusCode(404, new { message = "Üres adatbázis", result = computers });
+        }
+
+        [HttpGet("oneOsystemAndComputers")]
+        public object OneOsystemAndComputers([FromQuery]Guid id)
+        {
+            var computers = context.Osystems
+                .Where(o => o.Id == id)
+                .Join(context.Computers,
+                o => o.Id,
+                c => c.OsysId,
+                (o,c) => new {o.Name,c});
+
+            if (computers != null)
+            {
+                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = computers });
+            }
+
+            return StatusCode(404, new { message = "Üres adatbázis", result = computers });
+        }
+
+        [HttpGet("numberOfComputers")]
+        public object NumberOfComputers()
+        {
+            var osystems = context.Osystems
+                .GroupJoin(
+                context.Computers,
+                o => o.Id,
+                c => c.OsysId,
+                (o, c) => new { OsName = o.Name, Ver = o.Version, Count = c.Count() }
+                )
+                .OrderBy(o=>o.OsName)
+                .ThenBy(c => c.Ver);
+    
+
+            if (osystems != null)
+            {
+                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = osystems });
+            }
+
+            return StatusCode(404, new { message = "Üres adatbázis", result = osystems });
+        }
+
     }
 }

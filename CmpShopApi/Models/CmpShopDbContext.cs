@@ -6,7 +6,6 @@ namespace CmpShopApi.Models
     {
         public CmpShopDbContext(DbContextOptions options) : base(options)
         {
-
         }
 
         public CmpShopDbContext()
@@ -14,12 +13,11 @@ namespace CmpShopApi.Models
         }
 
         public DbSet<Osystem> Osystems { get; set; }
-        public DbSet<Computer> Computers { get; set; }  
+        public DbSet<Computer> Computers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql("server=localhost;database=computer;user=root;password=", ServerVersion.AutoDetect("server=localhost;database=computer;user=root;password="));
-
+            optionsBuilder.UseMySQL("server=localhost;database=computer;user=root;password=");
         }
     }
 }

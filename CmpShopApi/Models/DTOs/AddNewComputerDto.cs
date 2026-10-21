@@ -1,4 +1,6 @@
-﻿namespace CmpShopApi.Models.DTOs
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CmpShopApi.Models.DTOs
 {
     public class AddNewComputerDto
     {

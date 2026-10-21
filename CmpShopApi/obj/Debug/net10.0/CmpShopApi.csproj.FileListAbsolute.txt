@@ -266,3 +266,4 @@ C:\Users\barnari\Desktop\CmpShopApi13bCsop1-main\CmpShopApi\bin\Debug\net10.0\ru
 C:\Users\barnari\Desktop\CmpShopApi13bCsop1-main\CmpShopApi\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 C:\Users\barnari\Desktop\CmpShopApi13bCsop1-main\CmpShopApi\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 C:\Users\barnari\Desktop\CmpShopApi13bCsop1-main\CmpShopApi\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+C:\Users\barnari\Desktop\CmpShopApi13bCsop1-main\CmpShopApi\obj\Debug\net10.0\CmpShopApi.sourcelink.json

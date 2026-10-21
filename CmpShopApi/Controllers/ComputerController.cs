@@ -1,6 +1,8 @@
 ﻿using CmpShopApi.Models;
 using CmpShopApi.Models.DTOs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CmpShopApi.Controllers
 {
@@ -9,57 +11,134 @@ namespace CmpShopApi.Controllers
     public class ComputerController : ControllerBase
     {
         public CmpShopDbContext context = new CmpShopDbContext();
-        [HttpGet("getAll")]
-        public object GetAllComputer()
-        {
-            var computers = context.Computers.ToList();
-            return new { message = "Sikeres lekérdezés", result = computers };
-        }
         [HttpPost]
-        public object AddNewComputer(AddNewComputerDto addNewComputerDto)
+        public object AddNewCompueter([FromBody]AddNewComputerDto addNewComputerDto)
         {
-            var computer = new Computer
+            var cmp = new Computer
             {
                 Id = Guid.NewGuid(),
                 Brand = addNewComputerDto.Brand,
                 Type = addNewComputerDto.Type,
                 Display = addNewComputerDto.Display,
                 Memory = addNewComputerDto.Memory,
-                CreatedTime = DateTime.Now
+                CreatedTime = DateTime.Now,
+                OsysId = addNewComputerDto.OsysId,
+                
             };
-            context.Computers.Add(computer);
-            context.SaveChanges();
-            return StatusCode(201, new { message = "Sikeres felvétel", result = computer });
+
+            if (cmp != null)
+            {
+                context.Computers.Add(cmp);
+                context.SaveChanges();
+
+                return StatusCode(201, new { message = "Sikeres felvétel", result = cmp});
+            }
+
+            return StatusCode(400, new { message = "Sikertelen felvétel", result = cmp });
         }
-        [HttpPut]
-        public object UpdateComputer([FromQuery] Guid id, [FromBody] UpdateComputerDto updateComputerDto)
+
+        [HttpGet]
+        public object GetAll() 
         {
-            var computer = context.Computers.FirstOrDefault(c => c.Id == id);
-            if (computer == null)
+            var computers = context.Computers.ToList();
+
+            if (computers.Count > 0) 
+            {
+                return StatusCode(200, new { message = "Sikeres lekérdezés", result = computers });
+            }
+
+            return StatusCode(404, new { message = "Üres adatbázis", result = computers });
+        }
+
+        [HttpGet("byId")]
+        public object GetById([FromQuery]Guid id)
+        {
+            var computer = context.Computers.SingleOrDefault(x => x.Id == id);
+
+            if (computer != null)
+            {
+                return StatusCode(200, new { message = "Sikeres lekérdezés", result = computer });
+            }
+
+            return StatusCode(404, new { message = "Nincs találat", result = computer });
+        }
+
+        [HttpPut]
+        public object UpdateComputer([FromQuery] Guid id, [FromBody]UpdateComputerDto updateComputerDto)
+        {
+            var computer = context.Computers.Find(id);
+
+            if (computer != null)
             {
                 computer.Brand = updateComputerDto.Brand;
                 computer.Type = updateComputerDto.Type;
                 computer.Display = updateComputerDto.Display;
                 computer.Memory = updateComputerDto.Memory;
-                computer.CreatedTime = DateTime.Now;
+
                 context.Computers.Update(computer);
                 context.SaveChanges();
 
                 return StatusCode(200, new { message = "Sikeres frissítés", result = computer });
             }
-            return StatusCode(404, new { message = "Sikertlen frissítés", result = computer });
+
+            return StatusCode(404, new { message = "Nincs találat", result = computer });
         }
+
         [HttpDelete]
-        public object DeleteComputer([FromQuery] Guid id)
+        public object DeleteById([FromQuery] Guid id)
         {
-            var computer = context.Computers.FirstOrDefault(c => c.Id == id);
-            if (computer == null)
+            var computer = context.Computers.FirstOrDefault(x => x.Id == id);
+
+            if (computer != null)
             {
-                return StatusCode(404, new { message = "Sikertlen törlés", result = computer });
+                context.Computers.Remove(computer);
+                context.SaveChanges();
+                return StatusCode(204);
             }
-            context.Computers.Remove(computer);
-            context.SaveChanges();
-            return StatusCode(200, new { message = "Sikeres törlés", result = computer });
+
+            return StatusCode(404, new { message = "Nincs találat", result = computer });
+        }
+
+        [HttpGet("allComputerAndOpsystem")]
+        public object AllComputerAndOpsystem()
+        {
+            var computers = context.Osystems
+                .Include(o => o.Computers)
+                .Select(o => new { OsystemNév = o.Name, Verzió = o.Version, o.Computers });
+
+            var cmp = context.Osystems
+                .Join(context.Computers,
+                o => o.Id,
+                c => c.OsysId,
+                (o, c) => new { Név = o.Name, Verzió = o.Version, Márka = c.Brand, Típus = c.Type });
+
+            if (cmp != null)
+            {
+                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = cmp });
+            }
+
+            return StatusCode(404, new { message = "Üres adatbázis", result = cmp });
+        }
+
+
+        [HttpGet("onComputerOneOsystem")]
+        public object OnComputerOneOsystem([FromQuery]Guid id)
+        {
+            var computers = context.Computers
+                .Join(context.Osystems,
+                c => c.OsysId,
+                o => o.Id,
+                (computer,osystem) => new { computer.Id, computer.Brand, computer.Type , osystem.Name, osystem.Version}
+                );
+
+            var computer = computers.FirstOrDefault(c => c.Id == id);
+
+            if (computer != null)
+            {
+                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = computer });
+            }
+
+            return StatusCode(404, new { message = "Nincs ilyen Id-vel találat", result = computer });
         }
 
     }

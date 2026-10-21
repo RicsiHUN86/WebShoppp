@@ -1,5 +1,68 @@
 [
   {
+    "ContainingType": "CmpShopApi.Controllers.ComputerController",
+    "Method": "AddNewComputer",
+    "RelativePath": "computer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "addNewComputerDto",
+        "Type": "CmpShopApi.Models.DTOs.AddNewComputerDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CmpShopApi.Controllers.ComputerController",
+    "Method": "UpdateComputer",
+    "RelativePath": "computer",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": false
+      },
+      {
+        "Name": "updateComputerDto",
+        "Type": "CmpShopApi.Models.DTOs.UpdateComputerDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CmpShopApi.Controllers.ComputerController",
+    "Method": "DeleteComputer",
+    "RelativePath": "computer",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CmpShopApi.Controllers.ComputerController",
+    "Method": "GetAllComputer",
+    "RelativePath": "computer/getAll",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CmpShopApi.Controllers.OsystemController",
     "Method": "AddNewOsystem",
     "RelativePath": "osystem",
