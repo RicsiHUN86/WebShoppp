@@ -1,4 +1,4 @@
-﻿using CmpShopApi.Models;
+using CmpShopApi.Models;
 using CmpShopApi.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -76,32 +76,29 @@ namespace CmpShopApi.Controllers
         [HttpGet("allOsystemAndComputer")]
         public object AllOsystemAndComputer()
         {
-            var computers = context.Osystems.Include(o => o.Computers).ToList();
+            var osystems = context.Osystems.Include(o => o.Computers).ToList();
 
-            if (computers.Count > 0)
+            if (osystems.Count > 0)
             {
-                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = computers });
+                return StatusCode(200, new { message = "Sikeres lekérdezés", result = osystems });
             }
 
-            return StatusCode(404, new { message = "Üres adatbázis", result = computers });
+            return StatusCode(404, new { message = "Üres adatbázis", result = osystems });
         }
 
-        [HttpGet("oneOsystemAndComputers")]
-        public object OneOsystemAndComputers([FromQuery]Guid id)
+        [HttpGet("oneOsystemAndComputers/{id}")]
+        public object OneOsystemAndComputers(Guid id)
         {
-            var computers = context.Osystems
-                .Where(o => o.Id == id)
-                .Join(context.Computers,
-                o => o.Id,
-                c => c.OsysId,
-                (o,c) => new {o.Name,c});
+            var osystem = context.Osystems
+                .Include(o => o.Computers)
+                .FirstOrDefault(o => o.Id == id);
 
-            if (computers != null)
+            if (osystem != null)
             {
-                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = computers });
+                return StatusCode(200, new { message = "Sikeres lekérdezés", result = osystem });
             }
 
-            return StatusCode(404, new { message = "Üres adatbázis", result = computers });
+            return StatusCode(404, new { message = "Nincs ilyen op-rendszer" });
         }
 
         [HttpGet("numberOfComputers")]
@@ -114,16 +111,56 @@ namespace CmpShopApi.Controllers
                 c => c.OsysId,
                 (o, c) => new { OsName = o.Name, Ver = o.Version, Count = c.Count() }
                 )
-                .OrderBy(o=>o.OsName)
-                .ThenBy(c => c.Ver);
-    
+                .OrderBy(o => o.OsName)
+                .ThenBy(c => c.Ver)
+                .ToList();
 
-            if (osystems != null)
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = osystems });
+        }
+
+        [HttpGet("osystemStats")]
+        public object OsStats()
+        {
+            var osystems = context.Osystems.Include(o => o.Computers).ToList();
+
+            var stats = osystems.Select(o => new
             {
-                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = osystems });
-            }
+                o.Name,
+                o.Version,
+                Count = o.Computers.Count,
+                MaxMemory = o.Computers.Count > 0 ? o.Computers.Max(c => c.Memory) : 0,
+                AvgMemory = o.Computers.Count > 0 ? o.Computers.Average(c => c.Memory) : 0,
+                AvgDisplay = o.Computers.Count > 0 ? o.Computers.Average(c => c.Display) : 0
+            });
 
-            return StatusCode(404, new { message = "Üres adatbázis", result = osystems });
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = stats });
+        }
+
+        [HttpGet("osystemWithoutComputer")]
+        public object OsWithoutComputer()
+        {
+            var osystems = context.Osystems
+                .Where(o => !context.Computers.Any(c => c.OsysId == o.Id))
+                .ToList();
+
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = osystems });
+        }
+
+        [HttpGet("maxMemoryPerOsystem")]
+        public object MaxMemoryPerOs()
+        {
+            var osystems = context.Osystems.Include(o => o.Computers).ToList();
+
+            var result = osystems
+                .Where(o => o.Computers.Count > 0)
+                .Select(o => new
+                {
+                    OsName = o.Name,
+                    OsVersion = o.Version,
+                    Computer = o.Computers.OrderByDescending(c => c.Memory).First()
+                });
+
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = result });
         }
 
     }

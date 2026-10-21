@@ -1,4 +1,4 @@
-﻿using CmpShopApi.Models;
+using CmpShopApi.Models;
 using CmpShopApi.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -102,43 +102,118 @@ namespace CmpShopApi.Controllers
         [HttpGet("allComputerAndOpsystem")]
         public object AllComputerAndOpsystem()
         {
-            var computers = context.Osystems
-                .Include(o => o.Computers)
-                .Select(o => new { OsystemNév = o.Name, Verzió = o.Version, o.Computers });
-
-            var cmp = context.Osystems
-                .Join(context.Computers,
-                o => o.Id,
+            var cmp = context.Computers
+                .Join(context.Osystems,
                 c => c.OsysId,
-                (o, c) => new { Név = o.Name, Verzió = o.Version, Márka = c.Brand, Típus = c.Type });
+                o => o.Id,
+                (c, o) => new { c.Id, c.Brand, c.Type, c.Display, c.Memory, OsName = o.Name, OsVersion = o.Version })
+                .ToList();
 
-            if (cmp != null)
-            {
-                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = cmp });
-            }
-
-            return StatusCode(404, new { message = "Üres adatbázis", result = cmp });
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = cmp });
         }
 
+        [HttpGet("onComputerOneOsystem/{id}")]
+        public object OnComputerOneOsystem(Guid id)
+        {
+            var computer = context.Computers
+                .Join(context.Osystems,
+                c => c.OsysId,
+                o => o.Id,
+                (c, o) => new { c.Id, c.Brand, c.Type, o.Name, o.Version })
+                .FirstOrDefault(c => c.Id == id);
 
-        [HttpGet("onComputerOneOsystem")]
-        public object OnComputerOneOsystem([FromQuery]Guid id)
+            if (computer != null)
+            {
+                return StatusCode(200, new { message = "Sikeres lekérdezés", result = computer });
+            }
+
+            return StatusCode(404, new { message = "Nincs ilyen Id-vel találat" });
+        }
+
+        [HttpGet("computersByBrand/{brand}")]
+        public object ComputersByBrand(string brand)
+        {
+            var computers = context.Computers
+                .Where(c => c.Brand == brand)
+                .Join(context.Osystems,
+                c => c.OsysId,
+                o => o.Id,
+                (c, o) => new { c.Id, c.Brand, c.Type, c.Display, c.Memory, OsName = o.Name, OsVersion = o.Version })
+                .ToList();
+
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = computers });
+        }
+
+        [HttpGet("computersSorted")]
+        public object ComputersSorted()
         {
             var computers = context.Computers
                 .Join(context.Osystems,
                 c => c.OsysId,
                 o => o.Id,
-                (computer,osystem) => new { computer.Id, computer.Brand, computer.Type , osystem.Name, osystem.Version}
-                );
+                (c, o) => new { c.Brand, c.Type, c.Display, c.Memory, OsName = o.Name, OsVersion = o.Version })
+                .OrderBy(c => c.Brand)
+                .ThenBy(c => c.Type)
+                .ToList();
 
-            var computer = computers.FirstOrDefault(c => c.Id == id);
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = computers });
+        }
 
-            if (computer != null)
+        [HttpGet("minDisplay/{size}")]
+        public object MinDisplay(double size)
+        {
+            var computers = context.Computers
+                .Where(c => c.Display > size)
+                .Join(context.Osystems,
+                c => c.OsysId,
+                o => o.Id,
+                (c, o) => new { c.Brand, c.Type, c.Display, OsName = o.Name, OsVersion = o.Version })
+                .ToList();
+
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = computers });
+        }
+
+        [HttpGet("computersByOsystem/{name}")]
+        public object ComputersByOs(string name)
+        {
+            var computers = context.Computers
+                .Join(context.Osystems,
+                c => c.OsysId,
+                o => o.Id,
+                (c, o) => new { c.Id, c.Brand, c.Type, c.Display, c.Memory, OsName = o.Name, OsVersion = o.Version })
+                .Where(c => c.OsName == name)
+                .ToList();
+
+            if (computers.Count == 0)
             {
-                return StatusCode(200, new { message = "Sikeres lekeérdezés", result = computer });
+                return StatusCode(404, new { message = "Nincs találat", result = computers });
             }
 
-            return StatusCode(404, new { message = "Nincs ilyen Id-vel találat", result = computer });
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = computers });
+        }
+
+        [HttpGet("filterComputers")]
+        public object Filter([FromQuery] int? minMemory, [FromQuery] int? osVersion)
+        {
+            var query = context.Computers
+                .Join(context.Osystems,
+                c => c.OsysId,
+                o => o.Id,
+                (c, o) => new { c.Id, c.Brand, c.Type, c.Display, c.Memory, OsName = o.Name, OsVersion = o.Version });
+
+            if (minMemory != null)
+            {
+                query = query.Where(c => c.Memory >= minMemory);
+            }
+
+            if (osVersion != null)
+            {
+                query = query.Where(c => c.OsVersion == osVersion);
+            }
+
+            var computers = query.ToList();
+
+            return StatusCode(200, new { message = "Sikeres lekérdezés", result = computers });
         }
 
     }
